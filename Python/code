@@ -1,0 +1,80 @@
+import random
+
+class Edge:
+    def __init__(self, src, dest):
+        self.src = src
+        self.dest = dest
+
+class Graph:
+    def __init__(self):
+        self.V = 0
+        self.E = 0
+        self.edges = []
+
+def find(parent, i):
+    if parent[i] == i:
+        return i
+    return find(parent, parent[i])
+
+def Union(parent, x, y):
+    xset = find(parent, x)
+    yset = find(parent, y)
+    parent[xset] = yset
+
+def karger_min_cut(graph):
+    V = graph.V
+    E = graph.E
+    edges = graph.edges
+
+    parent = [i for i in range(V)]
+
+    vertices = V
+
+    while vertices > 2:
+
+        random_edge = random.randint(0, E - 1)
+
+        subset1 = find(parent, edges[random_edge].src)
+        subset2 = find(parent, edges[random_edge].dest)
+
+        if subset1 == subset2:
+            continue
+        
+        Union(parent, subset1, subset2)
+
+        vertices -= 1
+
+    cut_edges = 0
+    for edge in edges:
+        subset1 = find(parent, edge.src)
+        subset2 = find(parent, edge.dest)
+        if subset1 != subset2:
+            cut_edges += 1
+
+    return cut_edges
+
+def main():
+    filename = input("Enter the name of the CSV file: ")
+
+    with open(filename, 'r') as file:
+        V, E = map(int, file.readline().split(','))
+
+        graph = Graph()
+        graph.V = V
+        graph.E = E
+
+        for line in file:
+            src, dest = map(int, line.split(','))
+            graph.edges.append(Edge(src, dest))
+
+    min_cut = float('inf')
+    iterations = 1000  
+    for _ in range(iterations):
+        cut = karger_min_cut(graph)
+        if cut < min_cut:
+            min_cut = cut
+
+    print(f"Minimum cut after {iterations} iterations: {min_cut}")
+
+if __name__ == "__main__":
+    main()
