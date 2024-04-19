@@ -1,0 +1,115 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+
+using namespace std;
+
+struct Edge {
+    int src, dest;
+};
+
+struct Graph {
+    int V, E;
+    vector<Edge> edges;
+};
+
+int find(int parent[], int i) {
+    if (parent[i] == i)
+        return i;
+    return find(parent, parent[i]);
+}
+
+void Union(int parent[], int x, int y) {
+    int xset = find(parent, x);
+    int yset = find(parent, y);
+    parent[xset] = yset;
+}
+
+int kargerMinCut(Graph& graph) {
+    int V = graph.V, E = graph.E;
+    vector<Edge> edges = graph.edges;
+
+    int* parent = new int[V];
+    for (int i = 0; i < V; ++i){
+        parent[i] = i;
+    }
+    int vertices = V;
+
+    while (vertices > 2) {
+        
+        int randomEdge = rand() % E;
+
+        int subset1 = find(parent, edges[randomEdge].src);
+        int subset2 = find(parent, edges[randomEdge].dest);
+
+        if (subset1 == subset2){
+            continue;
+        }
+        Union(parent, subset1, subset2);
+
+        vertices--;
+    }
+
+    int cutEdges = 0;
+    for (int i = 0; i < E; i++) {
+        int subset1 = find(parent, edges[i].src);
+        int subset2 = find(parent, edges[i].dest);
+        if (subset1 != subset2){
+            cutEdges++;
+        }
+    }
+
+    delete[] parent;
+
+    return cutEdges;
+}
+
+int main() {
+    string filename;
+    cout << "Enter the name of the CSV file: ";
+    cin >> filename;
+
+    ifstream file(filename.c_str());
+    if (!file.is_open()) {
+        cerr << "Error: Unable to open file." << endl;
+        return 1;
+    }
+
+    int V, E;
+    char comma;
+    file >> V >> comma >> E;
+
+    Graph graph;
+    graph.V = V;
+    graph.E = E;
+
+    string line;
+    getline(file, line); 
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        int src, dest;
+        ss >> src >> comma >> dest;
+        graph.edges.push_back({src, dest});
+    }
+
+    file.close();
+
+    srand(time(NULL));
+
+    int minCut = INT_MAX;
+    int iterations = 1000;
+    for (int i = 0; i < iterations; ++i) {
+        int cut = kargerMinCut(graph);
+        if (cut < minCut){
+            minCut = cut;
+        }
+    }
+
+    cout << "Minimum cut after " << iterations << " iterations: " << minCut << endl;
+
+    return 0;
+}
